@@ -1,5 +1,6 @@
+package com.pan.plugin
+
 import com.intellij.openapi.ui.DialogWrapper
-import com.pan.plugin.GlobalConfigService
 import kotlinx.serialization.Serializable
 import java.awt.GridLayout
 import javax.swing.*
@@ -15,7 +16,7 @@ class SvgSettingsDialog(
     options: List<SvgOption>
 ) : DialogWrapper(true) {
 
-    private val resetAction = object : AbstractAction("Reset") {
+    private val resetAction = object : AbstractAction(t("svgo.action.reset")) {
         override fun actionPerformed(e: java.awt.event.ActionEvent?) {
             val ins = GlobalConfigService.getInstance()
             ins.reset();
@@ -36,7 +37,7 @@ class SvgSettingsDialog(
     var selectedOptions = options;
 
     init {
-        title = "Svgo Settings"
+        title = t("svgo.settings.title")
         init()
     }
 
@@ -50,7 +51,7 @@ class SvgSettingsDialog(
 
     override fun doOKAction() {
         selectedOptions = checkboxes.map { SvgOption(it.getClientProperty("key") as String, it.text, it.isSelected) }
-        println("Selected options: $selectedOptions")
+        //println("Selected options: $selectedOptions")
         super.doOKAction()
     }
 

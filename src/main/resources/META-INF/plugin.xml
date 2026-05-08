@@ -34,19 +34,13 @@
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->
     <depends>com.intellij.modules.platform</depends>
 
+    <resource-bundle>messages.svgo</resource-bundle>
+
     <actions>
-        <action
-                id="SvgoAction"
-                class="com.pan.plugin.SVGOAction"
-                text="SVGO"
-                description="SVG格式化"
-                icon="/icon.svg"
-        >
-            <add-to-group
-                    group-id="EditorPopupMenu"
-                    anchor="first"
-            />
-        </action>
+        <!-- SVGO 菜单组 -->
+        <group id="SVGO.Group" class="com.pan.plugin.SVGOGroup" text="SVGO" description="SVGO 工具" popup="true" icon="/icon.svg">
+            <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+        </group>
     </actions>
 
 </idea-plugin>

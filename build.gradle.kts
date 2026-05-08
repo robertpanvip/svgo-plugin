@@ -21,9 +21,10 @@ repositories {
 // Configure Gradle IntelliJ Plugin
 // Read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin.html
 dependencies {
-    implementation("io.github.qdsfdhvh:quickjs-kt:1.0.0-alpha15") {
-        exclude(group = "org.jetbrains.kotlinx")
-    }
+    // GraalJS JavaScript 引擎
+    implementation("org.graalvm.polyglot:polyglot:24.2.1")
+    implementation("org.graalvm.polyglot:js:24.2.1")
+    
     intellijPlatform {
         webstorm("2025.3")  // 或 "2025.2"，根据你想测试的版本
         testFramework(org.jetbrains.intellij.platform.gradle.TestFrameworkType.Platform)
