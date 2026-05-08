@@ -10,11 +10,50 @@
     <!-- A displayed Vendor name or Organization ID displayed on the Plugins Page. -->
     <vendor url="https://github.com/robertpanvip/svgo-plugin.git">PAN</vendor>
 
-    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager.
-         Guidelines: https://plugins.jetbrains.com/docs/marketplace/plugin-overview-page.html#plugin-description -->
+    <!-- Description of the plugin displayed on the Plugin Page and IDE Plugin Manager. -->
     <description><![CDATA[
+<p><strong>SVGO</strong> is a lightweight IntelliJ plugin that optimizes SVG files using the powerful SVGO engine.</p>
 
+<h3>Features</h3>
+<ul>
+  <li><strong>One-Click Optimization</strong> - Quickly optimize SVG files via right-click menu</li>
+  <li><strong>42 Optimization Options</strong> - Customizable optimization strategies</li>
+  <li><strong>Safe Processing</strong> - Preserves SVG structure and visual quality</li>
+  <li><strong>Smart Filtering</strong> - Only shows on SVG files</li>
+  <li><strong>Progress Indicator</strong> - Real-time feedback during optimization</li>
+  <li><strong>Auto-Save</strong> - Automatically saves optimized results</li>
+</ul>
+
+<h3>How to Use</h3>
+<ol>
+  <li>Right-click on an SVG file</li>
+  <li>Select <strong>SVGO → Run</strong> to optimize</li>
+  <li>Or select <strong>SVGO → Configuration</strong> to customize options</li>
+</ol>
+
+<p>Perfect for web developers and designers working with SVG assets!</p>
 ]]></description>
+
+    <!-- Change notes of the plugin -->
+    <change-notes><![CDATA[
+<h3>1.0.6 - 2026.05.08</h3>
+<ul>
+  <li>✨ Added full i18n support (Chinese & English)</li>
+  <li>🎯 Grouped menu items under SVGO submenu</li>
+  <li>🚀 Performance improvements with engine reuse (2.5-4x faster)</li>
+  <li>📊 Added progress indicator for optimization process</li>
+  <li>🎨 Using official SVGO-style icon</li>
+  <li>🐛 Fixed various runtime issues</li>
+</ul>
+
+<h3>1.0.0 - Initial Release</h3>
+<ul>
+  <li>Integrated SVGO optimization engine</li>
+  <li>42 optimization options</li>
+  <li>Right-click context menu support</li>
+  <li>Customizable configuration dialog</li>
+</ul>
+]]></change-notes>
 
     <!-- Product and plugin compatibility requirements.
          Read more: https://plugins.jetbrains.com/docs/intellij/plugin-compatibility.html -->

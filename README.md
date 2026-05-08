@@ -1,15 +1,20 @@
-<p><strong>SVGEazy</strong> is a lightweight and powerful IntelliJ plugin that makes viewing, interacting with, and optimizing SVG files effortless.</p>
+<p><strong>SVGO</strong> is a lightweight IntelliJ plugin that optimizes SVG files using the powerful SVGO engine.</p>
 
-<p>Perfect for developers and designers working with SVG icons and assets.</p>
-
-<p>Key Features:</p>
+<h3>Features</h3>
 <ul>
-  <li><strong>Real-Time Preview</strong>: Side-by-side view with code editor and instant high-fidelity preview — see every change immediately.</li>
-  <li><strong>Interactive Preview</strong>: Drag to pan and scroll to zoom in the preview pane, just like in professional design tools.</li>
-  <li><strong>Built-in SVGO Optimization</strong>: Optimize SVGs with one click or automatically using SVGO to significantly reduce file size without losing quality.</li>
-  <li><strong>Smooth Editing Experience</strong>: Full SVG/XML syntax highlighting and seamless editing in the native IntelliJ editor.</li>
+  <li><strong>One-Click Optimization</strong> - Quickly optimize SVG files via right-click menu</li>
+  <li><strong>42 Optimization Options</strong> - Customizable optimization strategies</li>
+  <li><strong>Safe Processing</strong> - Preserves SVG structure and visual quality</li>
+  <li><strong>Smart Filtering</strong> - Only shows on SVG files</li>
+  <li><strong>Progress Indicator</strong> - Real-time feedback during optimization</li>
+  <li><strong>Auto-Save</strong> - Automatically saves optimized results</li>
 </ul>
 
-<p>Whether you're cleaning up icons, optimizing web assets, or simply needing a better way to view and tweak SVGs, SVGEazy saves you time and effort.</p>
+<h3>How to Use</h3>
+<ol>
+  <li>Right-click on an SVG file</li>
+  <li>Select <strong>SVGO → Run</strong> to optimize</li>
+  <li>Or select <strong>SVGO → Configuration</strong> to customize options</li>
+</ol>
 
-<p>SVGEazy — Preview instantly, interact naturally, optimize powerfully.</p>
+<p>Perfect for web developers and designers working with SVG assets!</p>
