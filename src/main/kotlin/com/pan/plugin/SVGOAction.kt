@@ -8,7 +8,7 @@ import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import org.graalvm.polyglot.*
+import com.koushikdutta.quack.QuackContext
 
 class SVGOAction : AnAction() {
     init {
@@ -17,14 +17,6 @@ class SVGOAction : AnAction() {
     }
     
     companion object {
-        // 预创建并复用 Engine，避免重复初始化开销
-        private val engine: Engine by lazy {
-            Engine.newBuilder()
-                .allowExperimentalOptions(true)
-                .option("engine.WarnInterpreterOnly", "false")
-                .build()
-        }
-        
         // 预加载 JS 脚本
         private var jsContent: String? = null
         private var runJSContent: String? = null
@@ -60,16 +52,17 @@ class SVGOAction : AnAction() {
                 indicator.fraction = 0.0
                 indicator.text = t("svgo.progress.creating_context")
                 
-                // 复用 Engine 创建 Context，大幅提升性能
-                val context = Context.newBuilder()
-                    .engine(engine)
-                    .build()
-                
+                val quack = QuackContext.create()
                 try {
                     indicator.fraction = 0.3
                     indicator.text = t("svgo.progress.optimizing")
                     
-                    val result: String = context.eval("js", "window={};${jsContent};${runJSContent};optimizeSvg(\"${svgContent}\",${str})").asString()
+                    // 执行 JS 代码
+                    quack.evaluate("window={};${jsContent};")
+                    quack.evaluate(runJSContent)
+                    
+                    // 调用 optimizeSvg 函数
+                    val result = quack.evaluate("optimizeSvg(\"$svgContent\", $str)") as String
                     
                     indicator.fraction = 0.7
                     indicator.text = t("svgo.progress.saving")
@@ -84,7 +77,7 @@ class SVGOAction : AnAction() {
                     
                     println(t("svgo.log.completed"))
                 } finally {
-                    context.close()
+                    quack.close()
                 }
             }
         })
