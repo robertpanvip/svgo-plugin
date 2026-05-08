@@ -6,7 +6,7 @@ plugins {
 }
 
 group = "com.pan"
-version = "1.0.6"
+version = "1.0.0"
 
 repositories {
     // 国内镜像优先
@@ -56,5 +56,8 @@ tasks {
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
+    }
+    buildSearchableOptions {
+        enabled = false
     }
 }
