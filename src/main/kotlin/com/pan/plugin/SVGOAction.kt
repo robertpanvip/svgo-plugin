@@ -3,11 +3,13 @@ package com.pan.plugin
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
-import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
+import com.intellij.psi.PsiDocumentManager
 import com.koushikdutta.quack.QuackContext
 
 class SVGOAction : AnAction() {
@@ -36,8 +38,6 @@ class SVGOAction : AnAction() {
     fun execute(e: AnActionEvent, str: String) {
         val project = e.project ?: return
         val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
-        val virtualFile = psiFile.virtualFile ?: return
-
         // 预加载脚本
         loadScripts()
         val jsContent = jsContent ?: return
@@ -66,16 +66,34 @@ class SVGOAction : AnAction() {
                     
                     indicator.fraction = 0.7
                     indicator.text = t("svgo.progress.saving")
-                    
-                    // 将优化后的内容写回文件
-                    WriteCommandAction.runWriteCommandAction(project) {
-                        VfsUtil.saveText(virtualFile, result)
+                    ApplicationManager.getApplication().invokeLater {
+                        // 将优化后的内容写回文件
+                        CommandProcessor.getInstance().executeCommand(
+                            project,
+                            {
+                                WriteCommandAction.runWriteCommandAction(project) {
+                                    val document = PsiDocumentManager
+                                        .getInstance(project)
+                                        .getDocument(psiFile)
+                                        ?: return@runWriteCommandAction
+
+                                    document.setText(result)
+
+                                    PsiDocumentManager
+                                        .getInstance(project)
+                                        .commitDocument(document)
+                                    indicator.fraction = 1.0
+                                    indicator.text = t("svgo.progress.completed")
+
+                                    println(t("svgo.log.completed"))
+                                }
+                            },
+                            "SVGO",
+                            null
+                        )
                     }
-                    
-                    indicator.fraction = 1.0
-                    indicator.text = t("svgo.progress.completed")
-                    
-                    println(t("svgo.log.completed"))
+
+
                 } finally {
                     quack.close()
                 }

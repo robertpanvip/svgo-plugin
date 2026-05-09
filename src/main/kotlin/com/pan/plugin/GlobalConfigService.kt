@@ -53,8 +53,8 @@ object SvgOptimizeDefaults {
 }
 
 @State(
-    name = "SvgOptimizeConfig",
-    storages = [Storage("svg-optimize.xml")]
+    name = "SvgOOptimizeConfig",
+    storages = [Storage("svgo-optimize.xml")]
 )
 @Service(Service.Level.APP)
 class GlobalConfigService :
