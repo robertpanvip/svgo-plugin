@@ -102,7 +102,7 @@ class SVGOAction : AnAction() {
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val ins = GlobalConfigService.getInstance()
+        val ins = GlobalStateConfigService.getInstance()
         ins.restore()
 
         val optimizeOptions = ins.state.optimizeOptions

@@ -1,7 +1,6 @@
 package com.pan.plugin
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.google.gson.Gson
 
 fun stringify(json: List<SvgOption>): String {
@@ -16,7 +15,7 @@ class SVGOConfigAction : AnAction() {
     }
     
     override fun actionPerformed(e: AnActionEvent) {
-        val ins = GlobalConfigService.getInstance()
+        val ins = GlobalStateConfigService.getInstance()
         ins.restore()
 
         val optimizeOptions = ins.state.optimizeOptions
@@ -30,7 +29,7 @@ class SVGOConfigAction : AnAction() {
         val dialog = SvgSettingsDialog(options)
         if (dialog.showAndGet()) {
             val result = dialog.selectedOptions
-            val target = GlobalConfigService.getInstance().state.optimizeOptions
+            val target = GlobalStateConfigService.getInstance().state.optimizeOptions
 
             target.clear()
             result.forEach {

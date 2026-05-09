@@ -18,7 +18,7 @@ class SvgSettingsDialog(
 
     private val resetAction = object : AbstractAction(t("svgo.action.reset")) {
         override fun actionPerformed(e: java.awt.event.ActionEvent?) {
-            val ins = GlobalConfigService.getInstance()
+            val ins = GlobalStateConfigService.getInstance()
             ins.reset();
 
             checkboxes.forEach { cb ->

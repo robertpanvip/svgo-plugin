@@ -60,8 +60,8 @@ object SvgOptimizeDefaults {
     storages = [Storage("svgo-optimize.xml")]
 )
 @Service(Service.Level.APP)
-class GlobalConfigService :
-    PersistentStateComponent<GlobalConfigService.State> {
+class GlobalStateConfigService :
+    PersistentStateComponent<GlobalStateConfigService.State> {
 
     data class State(
         var optimizeOptions: MutableMap<String, Boolean> = mutableMapOf()
@@ -96,6 +96,6 @@ class GlobalConfigService :
     companion object {
         fun getInstance() =
             ApplicationManager.getApplication()
-                .getService(GlobalConfigService::class.java)
+                .getService(GlobalStateConfigService::class.java)
     }
 }
