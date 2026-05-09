@@ -15,7 +15,10 @@ function optimizeSvg(svgString, options = []) {
         "removeScripts",
         "removeStyleElement",
         "removeTitle",
-        "removeViewBox"
+        "removeViewBox",
+        "removeMetadata",
+        "convertEllipseToCircle",
+        "removeEmptyContainers"
     ];
 
     // 选中的插件

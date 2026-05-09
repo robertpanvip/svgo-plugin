@@ -48,7 +48,10 @@ object SvgOptimizeDefaults {
         SvgOption("removeUselessDefs", t("svgo.option.removeUselessDefs"), true),
         SvgOption("removeUselessStrokeAndFill", t("svgo.option.removeUselessStrokeAndFill"), true),
         SvgOption("removeViewBox", t("svgo.option.removeViewBox"), false),
-        SvgOption("removeXMLProcInst", t("svgo.option.removeXMLProcInst"), true)
+        SvgOption("removeXMLProcInst", t("svgo.option.removeXMLProcInst"), true),
+        SvgOption("removeMetadata", t("svgo.option.removeMetadata"), true),
+        SvgOption("convertEllipseToCircle", t("svgo.option.convertEllipseToCircle"), true),
+        SvgOption("removeEmptyContainers", t("svgo.option.removeEmptyContainers"), true)
     )
 }
 
