@@ -17,7 +17,11 @@ import com.intellij.psi.PsiManager
 import com.koushikdutta.quack.QuackContext
 
 
-class SVGOAction : AnAction() {
+class SVGOAction : AnAction(
+    "Optimize SVG",
+    "Optimize SVG files",
+    null
+) {
 
 
     companion object {
