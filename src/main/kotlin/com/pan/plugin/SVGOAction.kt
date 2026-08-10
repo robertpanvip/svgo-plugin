@@ -64,14 +64,15 @@ class SVGOAction : AnAction() {
         val project = e.project ?: return
 
 
-        val service =
+        val configService =
             GlobalStateConfigService.getInstance()
 
-        service.restore()
+        configService.restore()
 
 
         val options =
-            service.state.optimizeOptions.map { (key, checked) ->
+            configService.state.optimizeOptions.map { (key, checked) ->
+
                 SvgOption(
                     key,
                     key,
@@ -84,9 +85,11 @@ class SVGOAction : AnAction() {
             stringify(options)
 
 
+
         val selectedFiles =
             e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
                 ?: return
+
 
 
         val svgFiles =
@@ -99,6 +102,7 @@ class SVGOAction : AnAction() {
                 }
 
 
+
         if (svgFiles.isEmpty()) {
             return
         }
@@ -106,124 +110,133 @@ class SVGOAction : AnAction() {
 
 
         ProgressManager.getInstance()
-            .run(object : Task.Backgroundable(
-                project,
-                t("svgo.progress.title"),
-                false
-            ) {
-
-
-                override fun run(
-                    indicator: ProgressIndicator
+            .run(
+                object : Task.Backgroundable(
+                    project,
+                    t("svgo.progress.title"),
+                    false
                 ) {
 
 
-                    loadScripts()
+                    override fun run(
+                        indicator: ProgressIndicator
+                    ) {
 
 
-                    val js =
-                        jsContent ?: return
+                        loadScripts()
 
 
-                    val runJs =
-                        runJSContent ?: return
+                        val js =
+                            jsContent ?: return
 
 
-
-                    val quack =
-                        QuackContext.create()
-
-
-                    try {
-
-
-                        quack.evaluate(
-                            "window={};$js;"
-                        )
-
-                        quack.evaluate(runJs)
+                        val runJs =
+                            runJSContent ?: return
 
 
 
-                        svgFiles.forEachIndexed { index, file ->
-
-
-                            indicator.fraction =
-                                index.toDouble()
-                                    /
-                                svgFiles.size
-
-
-                            indicator.text =
-                                "${t("svgo.progress.optimizing")} ${file.name}"
+                        val quack =
+                            QuackContext.create()
 
 
 
-                            val psiFile =
-                                PsiManager
-                                    .getInstance(project)
-                                    .findFile(file)
-                                    ?: return@forEachIndexed
+                        try {
+
+
+                            quack.evaluate(
+                                "window={};$js;"
+                            )
+
+
+                            quack.evaluate(runJs)
 
 
 
-                            val svgContent =
-                                escapeSvg(
-                                    psiFile.text
-                                )
+                            svgFiles.forEachIndexed { index, file ->
+
+
+                                indicator.fraction =
+                                    index.toDouble()
+                                        /
+                                    svgFiles.size
 
 
 
-                            val result =
-                                quack.evaluate(
-                                    "optimizeSvg(\"$svgContent\", $configStr)"
-                                ) as String
+                                indicator.text =
+                                    "${t("svgo.progress.optimizing")} ${file.name}"
 
 
 
-                            ApplicationManager
-                                .getApplication()
-                                .invokeLater {
+                                val psiFile =
+                                    PsiManager
+                                        .getInstance(project)
+                                        .findFile(file)
+                                        ?: return@forEachIndexed
 
 
-                                    WriteCommandAction
-                                        .runWriteCommandAction(
-                                            project
-                                        ) {
+
+                                val svgContent =
+                                    escapeSvg(
+                                        psiFile.text
+                                    )
 
 
-                                            val document =
+
+                                val result =
+                                    quack.evaluate(
+                                        """optimizeSvg("$svgContent", $configStr)"""
+                                    ) as String
+
+
+
+                                ApplicationManager
+                                    .getApplication()
+                                    .invokeLater {
+
+
+                                        WriteCommandAction
+                                            .runWriteCommandAction(
+                                                project
+                                            ) {
+
+
+                                                val document =
+                                                    PsiDocumentManager
+                                                        .getInstance(project)
+                                                        .getDocument(psiFile)
+                                                        ?: return@runWriteCommandAction
+
+
+
+                                                document.setText(result)
+
+
+
                                                 PsiDocumentManager
                                                     .getInstance(project)
-                                                    .getDocument(psiFile)
-                                                    ?: return@runWriteCommandAction
+                                                    .commitDocument(document)
+                                            }
+                                    }
+                            }
 
 
-                                            document.setText(result)
+                        } finally {
 
+                            quack.close()
 
-                                            PsiDocumentManager
-                                                .getInstance(project)
-                                                .commitDocument(document)
-                                        }
-                                }
                         }
 
 
-                    } finally {
+                        indicator.fraction = 1.0
 
-                        quack.close()
-
+                        indicator.text =
+                            t("svgo.progress.completed")
                     }
-
-
-                    indicator.fraction = 1.0
-
-                    indicator.text =
-                        t("svgo.progress.completed")
                 }
-            })
+            )
     }
+
+
 
 
 
@@ -246,6 +259,7 @@ class SVGOAction : AnAction() {
         }
 
 
+
         val result =
             mutableListOf<VirtualFile>()
 
@@ -254,15 +268,15 @@ class SVGOAction : AnAction() {
         VfsUtilCore.iterateChildrenRecursively(
             file,
             null
-        ) {
+        ) { child ->
 
 
             if (
-                it.isFile &&
-                isSvg(it)
+                child.isFile &&
+                isSvg(child)
             ) {
 
-                result.add(it)
+                result.add(child)
 
             }
 
@@ -271,8 +285,10 @@ class SVGOAction : AnAction() {
         }
 
 
+
         return result
     }
+
 
 
 
@@ -286,20 +302,33 @@ class SVGOAction : AnAction() {
                 "svg",
                 ignoreCase = true
             )
-            == true
+            ?: false
     }
 
 
 
 
+
     private fun escapeSvg(
-        value: String
+        text: String
     ): String {
 
-        return value
-            .replace("\\", "\\\\")
-            .replace("\"", "\\\"")
-            .replace("\n", "\\n")
-            .replace("\r", "")
+        return text
+            .replace(
+                "\\",
+                "\\\\"
+            )
+            .replace(
+                "\"",
+                "\\\""
+            )
+            .replace(
+                "\n",
+                "\\n"
+            )
+            .replace(
+                "\r",
+                ""
+            )
     }
 }
