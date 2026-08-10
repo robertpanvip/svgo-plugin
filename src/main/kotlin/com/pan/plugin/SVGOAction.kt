@@ -4,170 +4,302 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
-import com.intellij.psi.PsiDocumentManager
-import com.koushikdutta.quack.QuackContext
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiManager
-import com.intellij.psi.PsiFile
+import com.koushikdutta.quack.QuackContext
+
 
 class SVGOAction : AnAction() {
+
     init {
-        templatePresentation.text = SVGOBundle.message("svgo.action.run.name")
-        templatePresentation.description = SVGOBundle.message("svgo.action.run.description")
+        templatePresentation.text =
+            SVGOBundle.message("svgo.action.run.name")
+
+        templatePresentation.description =
+            SVGOBundle.message("svgo.action.run.description")
     }
-    
+
+
     companion object {
-        // 预加载 JS 脚本
+
         private var jsContent: String? = null
         private var runJSContent: String? = null
-        
+
+
         fun loadScripts() {
+
             if (jsContent == null) {
-                jsContent = SVGOAction::class.java.getResourceAsStream("/web/svgo.browser.js")
-                    ?.bufferedReader()?.use { it.readText() }
+                jsContent =
+                    SVGOAction::class.java
+                        .getResourceAsStream("/web/svgo.browser.js")
+                        ?.bufferedReader()
+                        ?.use {
+                            it.readText()
+                        }
             }
+
+
             if (runJSContent == null) {
-                runJSContent = SVGOAction::class.java.getResourceAsStream("/web/run.js")
-                    ?.bufferedReader()?.use { it.readText() }
+                runJSContent =
+                    SVGOAction::class.java
+                        .getResourceAsStream("/web/run.js")
+                        ?.bufferedReader()
+                        ?.use {
+                            it.readText()
+                        }
             }
         }
     }
-    
-    fun execute(e: AnActionEvent,  file: VirtualFile, str: String) {
+
+
+
+    override fun actionPerformed(e: AnActionEvent) {
+
         val project = e.project ?: return
-        val psiFile = PsiManager
-            .getInstance(e.project!!)
-            .findFile(file)
-            ?: return
-        //val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
-        // 预加载脚本
-        loadScripts()
-        val jsContent = jsContent ?: return
-        val runJSContent = runJSContent ?: return
 
-        val svgContent = psiFile.text.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n").replace("\r", "")
-        
-        // 使用后台任务执行优化，带进度条
-        ProgressManager.getInstance().run(object : Task.Backgroundable(project, t("svgo.progress.title"), false) {
-            override fun run(indicator: ProgressIndicator) {
-                indicator.isIndeterminate = false
-                indicator.fraction = 0.0
-                indicator.text = t("svgo.progress.creating_context")
-                
-                val quack = QuackContext.create()
-                try {
-                    indicator.fraction = 0.3
-                    indicator.text = t("svgo.progress.optimizing")
-                    
-                    // 执行 JS 代码
-                    quack.evaluate("window={};${jsContent};")
-                    quack.evaluate(runJSContent)
-                    
-                    // 调用 optimizeSvg 函数
-                    val result = quack.evaluate("optimizeSvg(\"$svgContent\", $str)") as String
-                    
-                    indicator.fraction = 0.7
-                    indicator.text = t("svgo.progress.saving")
-                    ApplicationManager.getApplication().invokeLater {
-                        // 将优化后的内容写回文件
-                        CommandProcessor.getInstance().executeCommand(
-                            project,
-                            {
-                                WriteCommandAction.runWriteCommandAction(project) {
-                                    val document = PsiDocumentManager
-                                        .getInstance(project)
-                                        .getDocument(psiFile)
-                                        ?: return@runWriteCommandAction
 
-                                    document.setText(result)
+        val service =
+            GlobalStateConfigService.getInstance()
 
-                                    PsiDocumentManager
-                                        .getInstance(project)
-                                        .commitDocument(document)
-                                    indicator.fraction = 1.0
-                                    indicator.text = t("svgo.progress.completed")
+        service.restore()
 
-                                    println(t("svgo.log.completed"))
-                                }
-                            },
-                            "SVGO",
-                            null
+
+        val options =
+            service.state.optimizeOptions.map { (key, checked) ->
+                SvgOption(
+                    key,
+                    key,
+                    checked
+                )
+            }
+
+
+        val configStr =
+            stringify(options)
+
+
+        val selectedFiles =
+            e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+                ?: return
+
+
+        val svgFiles =
+            selectedFiles
+                .flatMap {
+                    collectSvgFiles(it)
+                }
+                .distinctBy {
+                    it.path
+                }
+
+
+        if (svgFiles.isEmpty()) {
+            return
+        }
+
+
+
+        ProgressManager.getInstance()
+            .run(object : Task.Backgroundable(
+                project,
+                t("svgo.progress.title"),
+                false
+            ) {
+
+
+                override fun run(
+                    indicator: ProgressIndicator
+                ) {
+
+
+                    loadScripts()
+
+
+                    val js =
+                        jsContent ?: return
+
+
+                    val runJs =
+                        runJSContent ?: return
+
+
+
+                    val quack =
+                        QuackContext.create()
+
+
+                    try {
+
+
+                        quack.evaluate(
+                            "window={};$js;"
                         )
+
+                        quack.evaluate(runJs)
+
+
+
+                        svgFiles.forEachIndexed { index, file ->
+
+
+                            indicator.fraction =
+                                index.toDouble()
+                                    /
+                                svgFiles.size
+
+
+                            indicator.text =
+                                "${t("svgo.progress.optimizing")} ${file.name}"
+
+
+
+                            val psiFile =
+                                PsiManager
+                                    .getInstance(project)
+                                    .findFile(file)
+                                    ?: return@forEachIndexed
+
+
+
+                            val svgContent =
+                                escapeSvg(
+                                    psiFile.text
+                                )
+
+
+
+                            val result =
+                                quack.evaluate(
+                                    "optimizeSvg(\"$svgContent\", $configStr)"
+                                ) as String
+
+
+
+                            ApplicationManager
+                                .getApplication()
+                                .invokeLater {
+
+
+                                    WriteCommandAction
+                                        .runWriteCommandAction(
+                                            project
+                                        ) {
+
+
+                                            val document =
+                                                PsiDocumentManager
+                                                    .getInstance(project)
+                                                    .getDocument(psiFile)
+                                                    ?: return@runWriteCommandAction
+
+
+                                            document.setText(result)
+
+
+                                            PsiDocumentManager
+                                                .getInstance(project)
+                                                .commitDocument(document)
+                                        }
+                                }
+                        }
+
+
+                    } finally {
+
+                        quack.close()
+
                     }
 
 
-                } finally {
-                    quack.close()
+                    indicator.fraction = 1.0
+
+                    indicator.text =
+                        t("svgo.progress.completed")
                 }
-            }
-        })
+            })
     }
 
-    private fun collectSvgFiles(file: VirtualFile): List<VirtualFile> {
+
+
+    private fun collectSvgFiles(
+        file: VirtualFile
+    ): List<VirtualFile> {
+
 
         if (file.isFile) {
+
             return if (isSvg(file)) {
+
                 listOf(file)
+
             } else {
+
                 emptyList()
+
             }
         }
 
 
-        val result = mutableListOf<VirtualFile>()
+        val result =
+            mutableListOf<VirtualFile>()
+
+
 
         VfsUtilCore.iterateChildrenRecursively(
             file,
             null
         ) {
 
-            if (it.isFile && isSvg(it)) {
+
+            if (
+                it.isFile &&
+                isSvg(it)
+            ) {
+
                 result.add(it)
+
             }
+
 
             true
         }
+
 
         return result
     }
 
 
-    private fun isSvg(file: VirtualFile): Boolean {
-        return file.extension.equals(
-            "svg",
-            ignoreCase = true
-        )
+
+
+    private fun isSvg(
+        file: VirtualFile
+    ): Boolean {
+
+        return file.extension
+            ?.equals(
+                "svg",
+                ignoreCase = true
+            )
+            == true
     }
 
-    override fun actionPerformed(e: AnActionEvent) {
-        val ins = GlobalStateConfigService.getInstance()
-        ins.restore()
-
-        val optimizeOptions = ins.state.optimizeOptions
-        val options = optimizeOptions.map { (key, checked) ->
-            SvgOption(key, key, checked)
-        }
-        
-        val configStr = com.pan.plugin.stringify(options)
-        //execute(e, configStr)
-        
-        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-            ?: return
 
 
-        val svgFiles = files.flatMap {
-            collectSvgFiles(it)
-        }
 
+    private fun escapeSvg(
+        value: String
+    ): String {
 
-        svgFiles.forEach { svg ->
-            execute(e, svg, configStr)
-        }
+        return value
+            .replace("\\", "\\\\")
+            .replace("\"", "\\\"")
+            .replace("\n", "\\n")
+            .replace("\r", "")
     }
 }
