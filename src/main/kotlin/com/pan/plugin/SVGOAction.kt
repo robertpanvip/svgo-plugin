@@ -215,13 +215,9 @@ class SVGOAction : AnAction() {
                                         svgText
                                     )
 
-
-                                val scriptCall =
-                                    "optimizeSvg(\"$escaped\",$config)"
-
-                                val result = quack.evaluate(scriptCall) as? String
-                                    ?: return@forEachIndexed
                                 
+                                 // 调用 optimizeSvg 函数
+                                val result = quack.evaluate("optimizeSvg(\"$escaped\", $config)") as String
 
                                 val psiFile =
                                     ReadAction.compute<PsiFile?, RuntimeException> {
