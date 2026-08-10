@@ -218,11 +218,10 @@ class SVGOAction : AnAction() {
 
                                 val result =
                                     quack.evaluate(
-                                        "optimizeSvg(\"$escaped\",$config)"
+                                        "optimizeSvg(\"${escaped}\",${config})"
                                     )
                                         as? String
                                         ?: return@forEachIndexed
-
 
 
                                 val psiFile =
