@@ -216,13 +216,12 @@ class SVGOAction : AnAction() {
                                     )
 
 
-                                val result =
-                                    quack.evaluate(
-                                        "optimizeSvg(\"${escaped}\",${config})"
-                                    )
-                                        as? String
-                                        ?: return@forEachIndexed
+                                val scriptCall =
+                                    "optimizeSvg(\"$escaped\",$config)"
 
+                                val result = quack.evaluate(scriptCall) as? String
+                                    ?: return@forEachIndexed
+                                
 
                                 val psiFile =
                                     ReadAction.compute<PsiFile?, RuntimeException> {
