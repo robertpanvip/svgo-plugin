@@ -63,6 +63,7 @@
         <!-- SVGO 菜单组 -->
         <group id="SVGO.Group" class="com.pan.plugin.SVGOGroup" text="SVGO" description="SVGO 工具" popup="true" icon="/icon.svg">
             <add-to-group group-id="EditorPopupMenu" anchor="first"/>
+            <add-to-group group-id="ProjectViewPopupMenu" anchor="first"/>
         </group>
     </actions>
 
