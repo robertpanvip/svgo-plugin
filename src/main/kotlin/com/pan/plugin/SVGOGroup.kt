@@ -19,14 +19,20 @@ class SVGOGroup : DefaultActionGroup() {
     override fun getActionUpdateThread(): ActionUpdateThread = ActionUpdateThread.EDT
     
     override fun update(e: AnActionEvent) {
-        val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
+        val files =
+            e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+                ?: return
 
-        val show = when {
-            virtualFile == null -> false
-            virtualFile.isDirectory -> true
-            virtualFile.extension?.equals("svg", ignoreCase = true) == true -> true
-            else -> false
-        }
+
+        val show =
+            files.any {
+                it.isDirectory ||
+                it.extension?.equals(
+                    "svg",
+                    ignoreCase = true
+                ) == true
+            }
+
 
         e.presentation.isVisible = show
         
