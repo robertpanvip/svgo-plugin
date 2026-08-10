@@ -178,17 +178,9 @@ class SVGOAction : AnAction() {
                             files.forEachIndexed { index, file ->
 
 
-                                indicator.fraction =
-                                    index.toDouble()
-                                        /
-                                    files.size
+                                indicator.fraction = index.toDouble() / files.size
 
-
-
-                                indicator.text =
-                                    "Optimizing ${file.name}"
-
-
+                                indicator.text = "Optimizing ${file.name}"
 
                                 /*
                                  * PSI读取必须在ReadAction
