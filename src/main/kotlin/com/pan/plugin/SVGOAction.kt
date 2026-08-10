@@ -37,8 +37,12 @@ class SVGOAction : AnAction() {
         }
     }
     
-    fun execute(e: AnActionEvent, psiFile: PsiFile, str: String) {
+    fun execute(e: AnActionEvent,  file: VirtualFile, str: String) {
         val project = e.project ?: return
+        val psiFile = PsiManager
+            .getInstance(e.project!!)
+            .findFile(file)
+            ?: return
         //val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
         // 预加载脚本
         loadScripts()
