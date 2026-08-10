@@ -59,19 +59,22 @@ class SVGOAction : AnAction() {
 
 
 
-    override fun actionPerformed(e: AnActionEvent) {
+    override fun actionPerformed(
+        e: AnActionEvent
+    ) {
 
-        val project = e.project ?: return
+        val project =
+            e.project ?: return
 
 
-        val configService =
+        val service =
             GlobalStateConfigService.getInstance()
 
-        configService.restore()
+        service.restore()
 
 
         val options =
-            configService.state.optimizeOptions.map { (key, checked) ->
+            service.state.optimizeOptions.map { (key, checked) ->
 
                 SvgOption(
                     key,
@@ -87,8 +90,10 @@ class SVGOAction : AnAction() {
 
 
         val selectedFiles =
-            e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
-                ?: return
+            e.getData(
+                CommonDataKeys.VIRTUAL_FILE_ARRAY
+            )
+            ?: return
 
 
 
@@ -109,11 +114,29 @@ class SVGOAction : AnAction() {
 
 
 
+        optimizeFiles(
+            project,
+            svgFiles,
+            configStr
+        )
+    }
+
+
+
+
+
+    private fun optimizeFiles(
+        project: com.intellij.openapi.project.Project,
+        files: List<VirtualFile>,
+        configStr: String
+    ) {
+
+
         ProgressManager.getInstance()
             .run(
                 object : Task.Backgroundable(
                     project,
-                    t("svgo.progress.title"),
+                    "SVGO",
                     false
                 ) {
 
@@ -135,6 +158,11 @@ class SVGOAction : AnAction() {
 
 
 
+                        val results =
+                            mutableListOf<Pair<VirtualFile, String>>()
+
+
+
                         val quack =
                             QuackContext.create()
 
@@ -143,6 +171,7 @@ class SVGOAction : AnAction() {
                         try {
 
 
+                            // 初始化一次
                             quack.evaluate(
                                 "window={};$js;"
                             )
@@ -152,18 +181,18 @@ class SVGOAction : AnAction() {
 
 
 
-                            svgFiles.forEachIndexed { index, file ->
+                            files.forEachIndexed { index, file ->
 
 
                                 indicator.fraction =
                                     index.toDouble()
                                         /
-                                    svgFiles.size
+                                    files.size
 
 
 
                                 indicator.text =
-                                    "${t("svgo.progress.optimizing")} ${file.name}"
+                                    "Optimizing ${file.name}"
 
 
 
@@ -175,7 +204,7 @@ class SVGOAction : AnAction() {
 
 
 
-                                val svgContent =
+                                val svg =
                                     escapeSvg(
                                         psiFile.text
                                     )
@@ -184,39 +213,15 @@ class SVGOAction : AnAction() {
 
                                 val result =
                                     quack.evaluate(
-                                        """optimizeSvg("$svgContent", $configStr)"""
-                                    ) as String
+                                        """optimizeSvg("$svg", $configStr)"""
+                                    )
+                                        as String
 
 
 
-                                ApplicationManager
-                                    .getApplication()
-                                    .invokeLater {
-
-
-                                        WriteCommandAction
-                                            .runWriteCommandAction(
-                                                project
-                                            ) {
-
-
-                                                val document =
-                                                    PsiDocumentManager
-                                                        .getInstance(project)
-                                                        .getDocument(psiFile)
-                                                        ?: return@runWriteCommandAction
-
-
-
-                                                document.setText(result)
-
-
-
-                                                PsiDocumentManager
-                                                    .getInstance(project)
-                                                    .commitDocument(document)
-                                            }
-                                    }
+                                results.add(
+                                    file to result
+                                )
                             }
 
 
@@ -227,10 +232,50 @@ class SVGOAction : AnAction() {
                         }
 
 
-                        indicator.fraction = 1.0
 
-                        indicator.text =
-                            t("svgo.progress.completed")
+                        // 一次写入
+                        ApplicationManager
+                            .getApplication()
+                            .invokeLater {
+
+
+                                WriteCommandAction
+                                    .runWriteCommandAction(
+                                        project,
+                                        "SVGO",
+                                        null,
+                                        {
+
+                                            results.forEach { (file, content) ->
+
+
+                                                val psiFile =
+                                                    PsiManager
+                                                        .getInstance(project)
+                                                        .findFile(file)
+                                                        ?: return@forEach
+
+
+
+                                                val document =
+                                                    PsiDocumentManager
+                                                        .getInstance(project)
+                                                        .getDocument(psiFile)
+                                                        ?: return@forEach
+
+
+
+                                                document.setText(content)
+
+
+                                                PsiDocumentManager
+                                                    .getInstance(project)
+                                                    .commitDocument(document)
+                                            }
+
+                                        }
+                                    )
+                            }
                     }
                 }
             )
@@ -265,24 +310,24 @@ class SVGOAction : AnAction() {
 
 
 
-        VfsUtilCore.iterateChildrenRecursively(
-            file,
-            null
-        ) { child ->
+        VfsUtilCore
+            .iterateChildrenRecursively(
+                file,
+                null
+            ) { child ->
 
 
-            if (
-                child.isFile &&
-                isSvg(child)
-            ) {
+                if (
+                    child.isFile &&
+                    isSvg(child)
+                ) {
 
-                result.add(child)
+                    result.add(child)
+                }
 
+
+                true
             }
-
-
-            true
-        }
 
 
 
