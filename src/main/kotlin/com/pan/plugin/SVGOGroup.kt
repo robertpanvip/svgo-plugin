@@ -20,7 +20,15 @@ class SVGOGroup : DefaultActionGroup() {
     
     override fun update(e: AnActionEvent) {
         val virtualFile = e.getData(CommonDataKeys.VIRTUAL_FILE)
-        val isSvg = virtualFile?.extension?.equals("svg", ignoreCase = true) == true
-        e.presentation.isVisible = isSvg
+
+        val show = when {
+            virtualFile == null -> false
+            virtualFile.isDirectory -> true
+            virtualFile.extension?.equals("svg", ignoreCase = true) == true -> true
+            else -> false
+        }
+
+        e.presentation.isVisible = show
+        
     }
 }
