@@ -11,6 +11,8 @@ import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.progress.Task
 import com.intellij.psi.PsiDocumentManager
 import com.koushikdutta.quack.QuackContext
+import com.intellij.openapi.vfs.VfsUtilCore
+import com.intellij.openapi.vfs.VirtualFile
 
 class SVGOAction : AnAction() {
     init {
@@ -35,9 +37,9 @@ class SVGOAction : AnAction() {
         }
     }
     
-    fun execute(e: AnActionEvent, str: String) {
+    fun execute(e: AnActionEvent, psiFile: PsiFile, str: String) {
         val project = e.project ?: return
-        val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
+        //val psiFile = e.getData(CommonDataKeys.PSI_FILE) ?: return
         // 预加载脚本
         loadScripts()
         val jsContent = jsContent ?: return
@@ -101,6 +103,42 @@ class SVGOAction : AnAction() {
         })
     }
 
+    private fun collectSvgFiles(file: VirtualFile): List<VirtualFile> {
+
+        if (file.isFile) {
+            return if (isSvg(file)) {
+                listOf(file)
+            } else {
+                emptyList()
+            }
+        }
+
+
+        val result = mutableListOf<VirtualFile>()
+
+        VfsUtilCore.iterateChildrenRecursively(
+            file,
+            null
+        ) {
+
+            if (it.isFile && isSvg(it)) {
+                result.add(it)
+            }
+
+            true
+        }
+
+        return result
+    }
+
+
+    private fun isSvg(file: VirtualFile): Boolean {
+        return file.extension.equals(
+            "svg",
+            ignoreCase = true
+        )
+    }
+
     override fun actionPerformed(e: AnActionEvent) {
         val ins = GlobalStateConfigService.getInstance()
         ins.restore()
@@ -111,6 +149,19 @@ class SVGOAction : AnAction() {
         }
         
         val configStr = com.pan.plugin.stringify(options)
-        execute(e, configStr)
+        //execute(e, configStr)
+        
+        val files = e.getData(CommonDataKeys.VIRTUAL_FILE_ARRAY)
+            ?: return
+
+
+        val svgFiles = files.flatMap {
+            collectSvgFiles(it)
+        }
+
+
+        svgFiles.forEach { svg ->
+            execute(e, svg, configStr)
+        }
     }
 }
