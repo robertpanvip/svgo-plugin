@@ -13,6 +13,8 @@ import com.intellij.psi.PsiDocumentManager
 import com.koushikdutta.quack.QuackContext
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.psi.PsiManager
+import com.intellij.psi.PsiFile
 
 class SVGOAction : AnAction() {
     init {
